@@ -1,4 +1,3 @@
-extern crate structopt;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
@@ -21,7 +20,7 @@ fn main() {
     if options.version_flag {
         print!("version: 0.0.1\n");
         return;
-    } else if (options.classpath.is_some() || options.cp.is_some()) {
+    } else if options.classpath.is_some() || options.cp.is_some() {
         println!("parse input {:?}\n", options);
     } else {
         print!("Usage: LearnJVM [-options] class [args...]\n")
