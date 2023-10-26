@@ -1,5 +1,5 @@
 [package]
-name = "LearnJVM"
+name = "learn_jvm"
 version = "0.0.1"
 edition = "2021"
 
@@ -7,3 +7,6 @@ edition = "2021"
 
 [dependencies]
 structopt = "0.3"
+zip = "0.6.6"
+walkdir = "2.3.3"
+thiserror = "1"
