@@ -26,3 +26,11 @@
   由前面的经验封装了一下 Result，但是这次遇到了这样一个场景：  
   三个 classpath 下搜索一个 class 文件，要三个都找不到才会返回 error。但是单个 classpath 寻找 class 的过程中也会有各种 error 出现。单个 classpath 出现 not found 的时候，也不能直接返回 error，而是要等所有的都返回 not found 才行  
   目前，直接子方法也返回 Result，是不是返回 Option 就可以了？不太确定
+
+## ch03
+久违的更新，实现了 60% 的第三章的 class 解析(没有去详细解析 attributes 里面的东西，后面用到再解析)
+
+请忽略一切 warning，代码比较凌乱，目前不成体系，看后续 interpreter 如何使用，再修改结构体定义
+
+截图如下：
+![](./doc/img/chapter3_classfile.jpg)

@@ -13,4 +13,7 @@ pub enum Error {
 
     #[error("cannot find class: {0}")]
     ClassNotFound(String),
+
+    #[error("unknown constant type: {0}")]
+    UnKnownConstantType(u8),
 }

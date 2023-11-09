@@ -5,7 +5,7 @@ use walkdir::WalkDir;
 use zip::ZipArchive;
 use std::result::Result as StdResult;
 
-pub use crate::classpath::errors::Error;
+pub use crate::error::Error;
 
 pub type Result<T> = StdResult<T, Error>;
 
