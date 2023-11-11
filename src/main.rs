@@ -61,12 +61,14 @@ fn parse_internal(options: Options) {
         }
 
         Ok(classfile) => {
+            let this_class= get_class_name(&classfile.constant_pool, &classfile.this_class);
+            let super_class= get_class_name(&classfile.constant_pool, &classfile.super_class);
             println!("parse classfile successful");
             println!("version: {}", classfile.major_version);
             println!("constants count: {}", classfile.constant_pool_count);
             println!("access_flags: {:#x}", classfile.access_flags);
-            println!("this class: {}", get_class_name(&classfile.constant_pool, &classfile.this_class).unwrap());
-            println!("super class: {}", get_class_name(&classfile.constant_pool, &classfile.super_class).unwrap());
+            println!("this class: {:?}", this_class);
+            println!("super class: {:?}", super_class);
             println!("interfaces: {:?}", classfile.interfaces);
             println!("fields count: {}", classfile.fields_count);
             for field_info in classfile.fields_info {

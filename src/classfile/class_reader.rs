@@ -387,7 +387,14 @@ fn get_utf8(constant_pool: &HashMap<u16, ConstantInfo>, index: &u16) -> Option<S
 }
 
 pub fn get_class_name(constant_pool: &HashMap<u16, ConstantInfo>, this_class: &u16) -> Option<String> {
+    println!("this_class {}", this_class);
+    if !constant_pool.contains_key(&this_class) {
+        return None;
+    }
     if let ConstantClass { index } = constant_pool.get(&this_class).unwrap() {
+        if  !constant_pool.contains_key(&index){
+            return None;
+        }
         if let ConstantUTF8 { value } = constant_pool.get(&index).unwrap() {
             return Some(String::from(value));
         }
