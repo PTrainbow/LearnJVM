@@ -1,14 +1,18 @@
 mod classpath;
 mod error;
 mod classfile;
+mod runtime;
 
+use std::borrow::Borrow;
 use std::cell::Cell;
+use std::ops::{Deref, DerefMut};
 use std::path::PathBuf;
 use classpath::Classpath;
 use structopt::StructOpt;
 use crate::classfile::class_reader::{get_class_name, Reader};
 use crate::classfile::ClassFile;
 use crate::error::Error;
+use crate::runtime::{Frame, LocalVars, Object, OperandStack, Slot, Thread};
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "LearnJVM", usage = "Usage: LearnJVM [-options] class [args...]")]
@@ -61,8 +65,8 @@ fn parse_internal(options: Options) {
         }
 
         Ok(classfile) => {
-            let this_class= get_class_name(&classfile.constant_pool, &classfile.this_class);
-            let super_class= get_class_name(&classfile.constant_pool, &classfile.super_class);
+            let this_class = get_class_name(&classfile.constant_pool, &classfile.this_class);
+            let super_class = get_class_name(&classfile.constant_pool, &classfile.super_class);
             println!("parse classfile successful");
             println!("version: {}", classfile.major_version);
             println!("constants count: {}", classfile.constant_pool_count);
@@ -80,4 +84,49 @@ fn parse_internal(options: Options) {
             }
         }
     }
+    test_ch_04();
+}
+
+fn test_ch_04() {
+    let frame = Frame::new_frame(1024, 1024);
+    test_local_vars(frame.local_vars);
+    test_operand_stack(frame.operand_stack);
+}
+
+fn test_operand_stack(mut ops: Box<OperandStack>) {
+    ops.deref_mut().push_int(100);
+    ops.deref_mut().push_int(-100);
+    ops.deref_mut().push_long(2997924580);
+    ops.deref_mut().push_long(-2997924580);
+    ops.deref_mut().push_float(3.1415926);
+    ops.deref_mut().push_double(2.71828182845);
+    ops.deref_mut().push_ref(None);
+    println!("{:?}", ops.deref_mut().pop_ref());
+    println!("{}", ops.deref_mut().pop_double());
+    println!("{}", ops.deref_mut().pop_float());
+    println!("{}", ops.deref_mut().pop_long());
+    println!("{}", ops.deref_mut().pop_long());
+    println!("{}", ops.deref_mut().pop_int());
+    println!("{}", ops.deref_mut().pop_int());
+}
+
+fn test_local_vars(mut vars: LocalVars) {
+    vars.set_int(0, 100);
+    vars.set_int(1, -100);
+    vars.set_long(2, 2997924580);
+    vars.set_long(4, -2997924580);
+    vars.set_float(6, 3.1415926);
+    vars.set_double(7, 2.71828182845);
+    vars.set_ref(9, None);
+    println!("{}", vars.get_int(0));
+    println!("{}", vars.get_int(1));
+    println!("{}", vars.get_long(2));
+    println!("{}", vars.get_long(4));
+    println!("{}", vars.get_float(6));
+    println!("{}", vars.get_double(7));
+    println!("{:?}", vars.get_ref(9));
+
+    let test = -10;
+    println!("signed-extend = {:016x}, zero extend = {:016x}", (test as i32) as i64, (test as u32) as i64);
+
 }

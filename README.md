@@ -1,36 +1,13 @@
 # 《自己动手写Java虚拟机》学习笔记(Rust版本)
 
-## ch01
-学习使用了 rust 的命令行解析库 [clap](https://docs.rs/clap/4.4.2/clap/struct.Command.html) 和 [structopt](https://docs.rs/structopt/0.3.26/structopt/index.html)  
+[ch01](./doc/ch01.md)   
+命令行工具
 
-使用 structopt 实现了类似命令行功能 
+[ch02](./doc/ch02.md)  
+搜索 class 文件
 
-![](./doc//img/rust_cmd.jpg)
+[ch03](./doc/ch03.md)  
+解析 class 文件
 
-## ch02
-久违的更新，基本实现了第二章查找类路径的功能(偷懒略有不同，主要就实现了 ZipEntry 和 DirEntry)
-
-截图如下：
-
-寻找 java.lang.Object
-![](./doc/img/chapter2_boot.png)  
-
-寻找 Demo 自定义 class
-![](./doc/img/chapter2_user.png)
-
-### 一些问题
-
-+ 不知道 Rust 如何用集合存储接口类型  
-  目前使用 Box&lt;dyn Trait&gt; 来存储
-+ Error 处理的感觉很别扭  
-  由前面的经验封装了一下 Result，但是这次遇到了这样一个场景：  
-  三个 classpath 下搜索一个 class 文件，要三个都找不到才会返回 error。但是单个 classpath 寻找 class 的过程中也会有各种 error 出现。单个 classpath 出现 not found 的时候，也不能直接返回 error，而是要等所有的都返回 not found 才行  
-  目前，直接子方法也返回 Result，是不是返回 Option 就可以了？不太确定
-
-## ch03
-久违的更新，实现了 60% 的第三章的 class 解析(没有去详细解析 attributes 里面的东西，后面用到再解析)
-
-请忽略一切 warning，代码比较凌乱，目前不成体系，看后续 interpreter 如何使用，再修改结构体定义
-
-截图如下：
-![](./doc/img/chapter3_classfile.jpg)
+[ch04](./doc/ch04.md)  
+运行时数据
