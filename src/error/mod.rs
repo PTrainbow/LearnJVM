@@ -1,4 +1,4 @@
-use std::{io};
+use std::io;
 use thiserror::Error as ThisError;
 use zip::result::ZipError;
 
@@ -16,4 +16,7 @@ pub enum Error {
 
     #[error("unknown constant type: {0}")]
     UnKnownConstantType(u8),
+
+    #[error("classpath not set!")]
+    ClasspathNotSet(),
 }

@@ -17,7 +17,7 @@ pub struct Classpath {
 }
 
 impl Classpath {
-    pub fn init_classpath(jre_classpath: PathBuf, user_classpath: Option<PathBuf>) -> Classpath {
+    pub fn init_classpath(jre_classpath: PathBuf, user_classpath: PathBuf) -> Classpath {
         return Classpath {
             boot_classpath: Box::new(
                 WildcardEntry::new(&jre_classpath.join("*"))
@@ -27,7 +27,7 @@ impl Classpath {
             ),
             user_classpath: Box::new(
                 DirEntry {
-                    path: user_classpath.unwrap_or(PathBuf::new())
+                    path: user_classpath
                 }
             ),
         };

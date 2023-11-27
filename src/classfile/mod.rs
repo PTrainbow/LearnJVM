@@ -6,6 +6,8 @@ use crate::classfile::class_reader::{ConstantInfo, FieldInfo, MethodInfo, Reader
 use crate::classfile::class_reader::ConstantInfo::{ConstantClass, ConstantUTF8};
 use crate::error::Error;
 
+use self::class_reader::AttributeInfo;
+
 pub struct ClassFile {
     pub magic: u32,
     pub minor_version: u16,
@@ -17,8 +19,10 @@ pub struct ClassFile {
     pub super_class: u16,
     pub interfaces_count: u16,
     pub interfaces: Vec<String>,
-    pub methods_count:u16,
-    pub methods_info: Vec<MethodInfo>,
     pub fields_count:u16,
     pub fields_info:Vec<FieldInfo>,
+    pub methods_count:u16,
+    pub methods_info: Vec<MethodInfo>,
+    pub attributes_count: u16,
+    pub attributes_info: Vec<AttributeInfo>
 }

@@ -32,7 +32,7 @@ impl Entry for DirEntry {
             .into_iter()
             .filter_map(StdResult::ok)
             .filter(|e| !e.file_type().is_dir()) {
-            // println!("name is {}", entry.path().display());
+            println!("name is {}", entry.path().display());
             if let Some(file_name) = entry.path().to_str() {
                 if file_name.contains(class_name) {
                     let mut data = Vec::new();
@@ -61,7 +61,7 @@ impl Entry for ZipEntry {
                 entry.read_to_end(&mut data)?;
                 return Ok(data);
             }
-            // println!("name is {}", entry.name())
+            println!("name is {}", entry.name())
         }
         Err(Error::ClassNotFound(String::from(class_name)))
     }
