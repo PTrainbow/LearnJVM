@@ -27,7 +27,7 @@ pub trait Instruction {
 impl fmt::Debug for dyn Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let name = self.get_name();
-        write!(f, "The name: {}", name)
+        write!(f, "{}", name)
     }
 }
 
