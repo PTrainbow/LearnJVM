@@ -1,11 +1,9 @@
 use core::{fmt, str};
 use std::{
-    borrow::{Borrow, BorrowMut}, cell::Cell, ops::{Deref, DerefMut}, rc::Rc, thread::sleep
+    borrow::BorrowMut, cell::Cell, rc::Rc
 };
 
-use zip::read;
-
-use crate::runtime::{Frame, LocalVars, Object, OperandStack, Slot, Thread};
+use crate::runtime::Frame;
 
 use self::bitcode_reader::BytecodeReader;
 
@@ -15,7 +13,7 @@ pub trait Instruction {
     fn execute(&self, frame: &mut Frame);
 
     // TODO
-    fn fetchOperands(&mut self, reader: &BytecodeReader){
+    fn fetch_operands(&mut self, reader: &BytecodeReader){
        
     }
 
@@ -383,7 +381,7 @@ impl Instruction for BIPush {
         frame.operand_stack.push_int(v as i32);
     }
 
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.value.set(reader.read_i8().unwrap());
     }
 }
@@ -393,13 +391,13 @@ impl Instruction for SIPush {
         frame.operand_stack.push_int(self.value.get().into());
     }
 
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.value.set(reader.read_i16().unwrap());
     }
 }
 
 impl Instruction for ALoad {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
@@ -438,7 +436,7 @@ impl Instruction for ALoad3 {
 }
 
 impl Instruction for DLoad {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
@@ -477,7 +475,7 @@ impl Instruction for DLoad3 {
 }
 
 impl Instruction for FLoad {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
@@ -516,7 +514,7 @@ impl Instruction for FLoad3 {
 }
 
 impl Instruction for ILoad {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
@@ -555,7 +553,7 @@ impl Instruction for ILoad3 {
 }
 
 impl Instruction for LLoad {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
@@ -594,7 +592,7 @@ impl Instruction for LLoad3 {
 }
 
 impl Instruction for AStore {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_i8().unwrap() as usize;
     }
 
@@ -633,7 +631,7 @@ impl Instruction for AStore3 {
 }
 
 impl Instruction for DStore {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_i8().unwrap() as usize;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -673,7 +671,7 @@ impl Instruction for DStore3 {
 }
 
 impl Instruction for FStore {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_i8().unwrap() as usize;
     }
 
@@ -712,7 +710,7 @@ impl Instruction for FStore3 {
 }
 
 impl Instruction for IStore {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_i8().unwrap() as usize;
     }
 
@@ -751,7 +749,7 @@ impl Instruction for IStore3 {
 }
 
 impl Instruction for LStore {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_i8().unwrap() as usize;
     }
     
@@ -1039,7 +1037,7 @@ impl Instruction for LAnd {
 }
 
 impl Instruction for IINC {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_u8().unwrap().into();
         self.value = reader.read_u8().unwrap().into();
     }
@@ -1296,7 +1294,7 @@ impl Instruction for L2I {
 }
 
 impl Instruction for GOTO {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1308,7 +1306,7 @@ impl Instruction for GOTO {
 }
 
 impl Instruction for LookUpSwitch {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         reader.skip_padding();
         self.default_offset = reader.read_i32().unwrap();
         self.n_pairs = reader.read_i32().unwrap();
@@ -1332,7 +1330,7 @@ impl Instruction for LookUpSwitch {
 }
 
 impl Instruction for TableSwitch {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         reader.skip_padding();
         self.default_offset = reader.read_i32().unwrap();
         self.low = reader.read_i32().unwrap();
@@ -1439,7 +1437,7 @@ impl Instruction for LCMP {
 }
 
 impl Instruction for IFICMPEQ {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1455,7 +1453,7 @@ impl Instruction for IFICMPEQ {
 }
 
 impl Instruction for IFICMPNE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1471,7 +1469,7 @@ impl Instruction for IFICMPNE {
 }
 
 impl Instruction for IFICMPLT {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1487,7 +1485,7 @@ impl Instruction for IFICMPLT {
 }
 
 impl Instruction for IFICMPLE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1503,7 +1501,7 @@ impl Instruction for IFICMPLE {
 }
 
 impl Instruction for IFICMPGT {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1520,7 +1518,7 @@ impl Instruction for IFICMPGT {
 }
 
 impl Instruction for IFICMPGE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1536,7 +1534,7 @@ impl Instruction for IFICMPGE {
 }
 
 impl Instruction for IFACMPEQ {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1552,7 +1550,7 @@ impl Instruction for IFACMPEQ {
 }
 
 impl Instruction for IFACMPNE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1568,7 +1566,7 @@ impl Instruction for IFACMPNE {
 }
 
 impl Instruction for IFEQ {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1582,7 +1580,7 @@ impl Instruction for IFEQ {
 }
 
 impl Instruction for IFNE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1596,7 +1594,7 @@ impl Instruction for IFNE {
 }
 
 impl Instruction for IFLT {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1611,7 +1609,7 @@ impl Instruction for IFLT {
 }
 
 impl Instruction for IFLE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1626,7 +1624,7 @@ impl Instruction for IFLE {
 }
 
 impl Instruction for IFGT {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
@@ -1641,7 +1639,7 @@ impl Instruction for IFGT {
 }
 
 impl Instruction for IFGE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1655,7 +1653,7 @@ impl Instruction for IFGE {
 }
 
 impl Instruction for GOTO_W {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i32().unwrap();
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1666,7 +1664,7 @@ impl Instruction for GOTO_W {
 }
 
 impl Instruction for IFNULL {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1680,7 +1678,7 @@ impl Instruction for IFNULL {
 }
 
 impl Instruction for IFNOTNULL {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
     fn execute(&self, frame: &mut Frame) {
@@ -1694,7 +1692,7 @@ impl Instruction for IFNOTNULL {
 }
 
 impl Instruction for WIDE {
-    fn fetchOperands(&mut self, reader: &BytecodeReader) {
+    fn fetch_operands(&mut self, reader: &BytecodeReader) {
         let opcode = reader.read_u8().unwrap();
         match opcode {
             0x15=> {

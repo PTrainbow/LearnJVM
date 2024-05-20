@@ -6,7 +6,6 @@ mod instructions;
 
 
 use std::cell::Cell;
-use std::ops::DerefMut;
 use std::path::PathBuf;
 use classfile::ClassFile;
 use classpath::Classpath;

@@ -1,12 +1,12 @@
 pub(crate) mod class_reader;
+pub(crate) mod constant_pool;
+pub(crate) mod attribute;
 
 use std::collections::HashMap;
-use byteorder::{BE, ReadBytesExt};
-use crate::classfile::class_reader::{ConstantInfo, FieldInfo, MethodInfo, Reader};
-use crate::classfile::class_reader::ConstantInfo::{ConstantClass, ConstantUTF8};
-use crate::error::Error;
+use self::constant_pool::ConstantInfo;
+use self::class_reader::{FieldInfo, MethodInfo};
+use self::attribute::AttributeInfo;
 
-use self::class_reader::AttributeInfo;
 
 pub struct ClassFile {
     pub magic: u32,

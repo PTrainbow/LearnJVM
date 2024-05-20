@@ -1,12 +1,12 @@
 use std::cell::Cell;
-use std::fmt::Error;
 use std::rc::Rc;
 use std::thread::sleep;
 use std::time::Duration;
 
-use crate::classfile::class_reader::{AttributeInfo, MethodInfo};
+use crate::classfile::attribute::AttributeInfo;
+use crate::classfile::class_reader::MethodInfo;
 use crate::instructions::bitcode_reader::BytecodeReader;
-use crate::instructions::{new_instruction, Instruction};
+use crate::instructions::new_instruction;
 
 #[derive(Clone, Debug)]
 pub struct Object {}
@@ -282,12 +282,12 @@ pub fn interpret(method: &MethodInfo) {
             let mut frame = Frame::new_frame(std::ptr::addr_of_mut!(thread), *max_locals as usize, *max_stacks as usize);
             thread.push_frame(std::ptr::addr_of_mut!(frame));
             // TODO copy???
-            innerLoop(&mut thread, code.to_owned());
+            inner_loop(&mut thread, code.to_owned());
         }
     }
 }
 
-pub fn innerLoop(thread: &mut Thread, bytecode: Vec<u8>){
+pub fn inner_loop(thread: &mut Thread, bytecode: Vec<u8>){
     let frame = thread.pop_frame();
     let mut reader = BytecodeReader {
         content: bytecode,
@@ -299,7 +299,7 @@ pub fn innerLoop(thread: &mut Thread, bytecode: Vec<u8>){
         reader.reset( next_pc);
         let opcode = reader.read_u8().unwrap();
 	    let mut inst =  new_instruction(opcode);
-		inst.fetchOperands(&reader);
+		inst.fetch_operands(&reader);
         let pc = reader.cursor.get();
         unsafe {
             (*frame).next_pc = pc;

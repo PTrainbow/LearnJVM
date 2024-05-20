@@ -1,11 +1,10 @@
 mod entry;
 
-use std::path::{PathBuf};
+use std::path::PathBuf;
 use crate::classpath::entry::{DirEntry, Entry, WildcardEntry};
 use std::result::Result as StdResult;
 use crate::error::Error;
 use crate::error::Error::ClassNotFound;
-use crate::classfile::class_reader::Reader;
 
 
 pub type Result<T> = StdResult<T, Error>;
