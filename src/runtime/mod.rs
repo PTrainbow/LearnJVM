@@ -1,4 +1,4 @@
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 use std::thread::sleep;
 use std::time::Duration;
@@ -19,17 +19,15 @@ pub struct Thread {
 pub struct Stack {
     max_size: usize,
     size: usize,
-    _top: *mut Frame,
+    frames:  Vec<Frame>
 }
 
 pub struct LocalVars(Vec<Slot>);
 
 pub struct Frame {
-    pub lower: *mut Frame,
     pub local_vars: LocalVars,
     pub operand_stack: OperandStack,
-    pub next_pc: i32,
-    pub thread: *mut Thread,
+    pub next_pc: i32
 }
 
 // TODO clone option/box
@@ -44,8 +42,8 @@ pub struct OperandStack {
     slots: Vec<Slot>,
 }
 
-impl Thread {
-    pub fn new_thread() -> Thread {
+impl Thread{
+    pub fn new_thread() -> Thread{
         return Thread {
             pc: 0,
             stack: Stack::new_stack(1024),
@@ -60,15 +58,15 @@ impl Thread {
         self.pc = pc;
     }
 
-    pub fn pop_frame(&mut self) -> *mut Frame {
+    pub fn pop_frame(&mut self) -> Frame {
         return self.stack.pop();
     }
 
-    pub fn current_frame(&mut self) -> *mut Frame {
+    pub fn current_frame(&mut self) -> &mut Frame {
         return self.stack.top();
     }
 
-    pub fn push_frame(&mut self, frame: *mut Frame) {
+    pub fn push_frame(&mut self, frame:  Frame) {
         return self.stack.push(frame);
     }
 }
@@ -78,50 +76,42 @@ impl Stack {
         return Stack {
             max_size,
             size: 0,
-            _top: std::ptr::null_mut(),
+            frames: Vec::new(),
         };
     }
 
-    pub fn push(&mut self, frame: *mut Frame) {
+    pub fn push(&mut self, frame: Frame) {
         if self.size >= self.max_size {
             panic!("stackOverflow");
         }
-        if !self._top.is_null() {
-            unsafe { (*frame).lower = self._top }
+        if self.frames.is_empty() {
+            self.frames.push(frame);
         }
-        self._top = frame;
         self.size += 1;
     }
 
-    pub fn pop(&mut self) -> *mut Frame {
-        if self._top.is_null() {
+    pub fn pop(&mut self) -> Frame {
+        if self.frames.is_empty() {
             panic!("stack is empty");
-        }
-        let top = self._top;
-        unsafe {
-            self._top = (*top).lower;
-            (*top).lower = std::ptr::null_mut()
         }
         self.size -= 1;
-        return top;
+        return self.frames.remove(self.size);
     }
 
-    pub fn top(&mut self) -> *mut Frame {
-        if self._top.is_null() {
+    pub fn top(&mut self) -> &mut Frame {
+        if self.frames.is_empty() {
             panic!("stack is empty");
         }
-        return self._top;
+        return self.frames.get_mut(0).unwrap();
     }
 }
 
 impl Frame {
-    pub fn new_frame(thread: *mut Thread, max_local: usize, max_stack: usize) -> Frame {
+    pub fn new_frame(max_local: usize, max_stack: usize) -> Frame {
         return Frame {
-            lower: std::ptr::null_mut(),
             local_vars: LocalVars::new_local_vars(max_local),
             operand_stack: OperandStack::new_operand_stack(max_stack),
-            next_pc: 0,
-            thread,
+            next_pc: 0
         };
     }
 }
@@ -279,8 +269,8 @@ pub fn interpret(method: &MethodInfo) {
     for attribute in attribute_list {
         if let AttributeInfo::CodeAttribute{max_stacks, max_locals,code_length,code,exception_table,attributes} = attribute {
             let mut thread = Thread::new_thread();
-            let mut frame = Frame::new_frame(std::ptr::addr_of_mut!(thread), *max_locals as usize, *max_stacks as usize);
-            thread.push_frame(std::ptr::addr_of_mut!(frame));
+            let mut frame = Frame::new_frame(*max_locals as usize, *max_stacks as usize);
+            thread.push_frame(frame);
             // TODO copy???
             inner_loop(&mut thread, code.to_owned());
         }
@@ -288,13 +278,13 @@ pub fn interpret(method: &MethodInfo) {
 }
 
 pub fn inner_loop(thread: &mut Thread, bytecode: Vec<u8>){
-    let frame = thread.pop_frame();
+    let mut frame = thread.pop_frame();
     let mut reader = BytecodeReader {
         content: bytecode,
         cursor: Cell::new(0),
     };
     while true {
-        let next_pc = unsafe { (*frame).next_pc };
+        let next_pc = frame.next_pc;
         thread.set_pc(next_pc);
         reader.reset( next_pc);
         let opcode = reader.read_u8().unwrap();
@@ -302,11 +292,11 @@ pub fn inner_loop(thread: &mut Thread, bytecode: Vec<u8>){
 		inst.fetch_operands(&reader);
         let pc = reader.cursor.get();
         unsafe {
-            (*frame).next_pc = pc;
+            frame.next_pc = pc;
 		    println!("pc:{} inst:{:?}", pc, inst);
 		    // execute
-		    inst.execute(&mut *frame);
-            for local in &(*frame).local_vars.0 {
+		    inst.execute(&mut frame, thread);
+            for local in &frame.local_vars.0 {
                 println!("local vars = {}", local.num);
             }
             println!("");

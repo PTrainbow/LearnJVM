@@ -7,6 +7,7 @@ mod instructions;
 
 use std::cell::Cell;
 use std::path::PathBuf;
+use std::rc::Rc;
 use classfile::ClassFile;
 use classpath::Classpath;
 use structopt::StructOpt;
@@ -105,7 +106,7 @@ fn test_ch_05(classfile:&ClassFile) {
 
 fn test_ch_04() {
     let mut thread = Thread::new_thread();
-    let frame = Frame::new_frame(std::ptr::addr_of_mut!(thread), 1024, 1024);
+    let frame = Frame::new_frame(1024, 1024);
     test_local_vars(frame.local_vars);
     test_operand_stack(frame.operand_stack);
 }

@@ -3,14 +3,14 @@ use std::{
     borrow::BorrowMut, cell::Cell, rc::Rc
 };
 
-use crate::runtime::Frame;
+use crate::runtime::{Frame, Thread};
 
 use self::bitcode_reader::BytecodeReader;
 
 pub(crate) mod bitcode_reader;
 
 pub trait Instruction {
-    fn execute(&self, frame: &mut Frame);
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread);
 
     // TODO
     fn fetch_operands(&mut self, reader: &BytecodeReader){
@@ -281,101 +281,101 @@ pub struct GOTO_W {
     offset:i32
 }
 impl Instruction for NoOperandsInstruction {
-    fn execute(&self, frame: &mut Frame) {}
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {}
 }
 
 impl Instruction for AConstNull {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_ref(Option::None)
     }
 }
 
 impl Instruction for DConst0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_double(0.0)
     }
 }
 
 impl Instruction for DConst1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_double(1.0)
     }
 }
 
 impl Instruction for FConst1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_float(1.0)
     }
 }
 
 impl Instruction for FConst2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_float(2.0)
     }
 }
 
 impl Instruction for FConst0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_float(0.0)
     }
 }
 
 impl Instruction for IConst0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(0)
     }
 }
 
 impl Instruction for IConst1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(1)
     }
 }
 
 impl Instruction for IConst2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(2)
     }
 }
 
 impl Instruction for IConst3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(3)
     }
 }
 
 impl Instruction for IConst4 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(4)
     }
 }
 
 impl Instruction for IConst5 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(5)
     }
 }
 
 impl Instruction for LConst0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_long(0)
     }
 }
 
 impl Instruction for LConst1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_long(1)
     }
 }
 
 impl Instruction for IConstM1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(-1)
     }
 }
 
 impl Instruction for BIPush {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let v = self.value.get();
         println!("BIPush {}", v);
         frame.operand_stack.push_int(v as i32);
@@ -387,7 +387,7 @@ impl Instruction for BIPush {
 }
 
 impl Instruction for SIPush {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.push_int(self.value.get().into());
     }
 
@@ -401,35 +401,35 @@ impl Instruction for ALoad {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_ref(self.index);
         frame.operand_stack.push_ref(reference)
     }
 }
 
 impl Instruction for ALoad0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_ref(0);
         frame.operand_stack.push_ref(reference)
     }
 }
 
 impl Instruction for ALoad1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_ref(1);
         frame.operand_stack.push_ref(reference)
     }
 }
 
 impl Instruction for ALoad2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_ref(2);
         frame.operand_stack.push_ref(reference)
     }
 }
 
 impl Instruction for ALoad3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_ref(3);
         frame.operand_stack.push_ref(reference)
     }
@@ -440,35 +440,35 @@ impl Instruction for DLoad {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_double(self.index);
         frame.operand_stack.push_double(reference)
     }
 }
 
 impl Instruction for DLoad0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_double(0);
         frame.operand_stack.push_double(reference)
     }
 }
 
 impl Instruction for DLoad1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_double(1);
         frame.operand_stack.push_double(reference)
     }
 }
 
 impl Instruction for DLoad2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_double(2);
         frame.operand_stack.push_double(reference)
     }
 }
 
 impl Instruction for DLoad3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let reference = frame.local_vars.get_double(3);
         frame.operand_stack.push_double(reference)
     }
@@ -479,35 +479,35 @@ impl Instruction for FLoad {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_float(self.index);
         frame.operand_stack.push_float(value)
     }
 }
 
 impl Instruction for FLoad0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_float(0);
         frame.operand_stack.push_float(value)
     }
 }
 
 impl Instruction for FLoad1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_float(1);
         frame.operand_stack.push_float(value)
     }
 }
 
 impl Instruction for FLoad2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_float(2);
         frame.operand_stack.push_float(value)
     }
 }
 
 impl Instruction for FLoad3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_float(3);
         frame.operand_stack.push_float(value)
     }
@@ -518,35 +518,35 @@ impl Instruction for ILoad {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_int(self.index);
         frame.operand_stack.push_int(value)
     }
 }
 
 impl Instruction for ILoad0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_int(0);
         frame.operand_stack.push_int(value)
     }
 }
 
 impl Instruction for ILoad1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_int(1);
         frame.operand_stack.push_int(value)
     }
 }
 
 impl Instruction for ILoad2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_int(2);
         frame.operand_stack.push_int(value)
     }
 }
 
 impl Instruction for ILoad3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_int(3);
         frame.operand_stack.push_int(value)
     }
@@ -557,35 +557,35 @@ impl Instruction for LLoad {
         self.index = reader.read_u8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_long(self.index);
         frame.operand_stack.push_long(value)
     }
 }
 
 impl Instruction for LLoad0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_long(0);
         frame.operand_stack.push_long(value)
     }
 }
 
 impl Instruction for LLoad1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_long(1);
         frame.operand_stack.push_long(value)
     }
 }
 
 impl Instruction for LLoad2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_long(2);
         frame.operand_stack.push_long(value)
     }
 }
 
 impl Instruction for LLoad3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.local_vars.get_long(3);
         frame.operand_stack.push_long(value)
     }
@@ -596,35 +596,35 @@ impl Instruction for AStore {
         self.index = reader.read_i8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_ref();
         frame.local_vars.set_ref(self.index, value)
     }
 }
 
 impl Instruction for AStore0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_ref();
         frame.local_vars.set_ref(0, value)
     }
 }
 
 impl Instruction for AStore1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_ref();
         frame.local_vars.set_ref(1, value)
     }
 }
 
 impl Instruction for AStore2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_ref();
         frame.local_vars.set_ref(2, value)
     }
 }
 
 impl Instruction for AStore3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_ref();
         frame.local_vars.set_ref(3, value)
     }
@@ -634,28 +634,28 @@ impl Instruction for DStore {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.index = reader.read_i8().unwrap() as usize;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_double();
         frame.local_vars.set_double(self.index, value)
     }
 }
 
 impl Instruction for DStore0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_double();
         frame.local_vars.set_double(0, value)
     }
 }
 
 impl Instruction for DStore1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_double();
         frame.local_vars.set_double(1, value)
     }
 }
 
 impl Instruction for DStore2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_double();
         // TODO wtf???
         frame.local_vars.set_double(2, value)
@@ -663,7 +663,7 @@ impl Instruction for DStore2 {
 }
 
 impl Instruction for DStore3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_double();
         // TODO wtf???
         frame.local_vars.set_double(3, value)
@@ -675,35 +675,35 @@ impl Instruction for FStore {
         self.index = reader.read_i8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_float();
         frame.local_vars.set_float(self.index, value)
     }
 }
 
 impl Instruction for FStore0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_float();
         frame.local_vars.set_float(0, value)
     }
 }
 
 impl Instruction for FStore1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_float();
         frame.local_vars.set_float(1, value)
     }
 }
 
 impl Instruction for FStore2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_float();
         frame.local_vars.set_float(2, value)
     }
 }
 
 impl Instruction for FStore3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_float();
         frame.local_vars.set_float(3, value)
     }
@@ -714,35 +714,35 @@ impl Instruction for IStore {
         self.index = reader.read_i8().unwrap() as usize;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_int();
         frame.local_vars.set_int(self.index, value)
     }
 }
 
 impl Instruction for IStore0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_int();
         frame.local_vars.set_int(0, value)
     }
 }
 
 impl Instruction for IStore1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_int();
         frame.local_vars.set_int(1, value)
     }
 }
 
 impl Instruction for IStore2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_int();
         frame.local_vars.set_int(2, value)
     }
 }
 
 impl Instruction for IStore3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_int();
         frame.local_vars.set_int(3, value)
     }
@@ -753,42 +753,42 @@ impl Instruction for LStore {
         self.index = reader.read_i8().unwrap() as usize;
     }
     
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_long();
         frame.local_vars.set_long(self.index, value)
     }
 }
 
 impl Instruction for LStore0 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_long();
         frame.local_vars.set_long(0, value)
     }
 }
 
 impl Instruction for LStore1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_long();
         frame.local_vars.set_long(1, value)
     }
 }
 
 impl Instruction for LStore2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_long();
         frame.local_vars.set_long(2, value)
     }
 }
 
 impl Instruction for LStore3 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let value = frame.operand_stack.pop_long();
         frame.local_vars.set_long(3, value)
     }
 }
 
 impl Instruction for Dup {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let value = stack.pop_slot();
         stack.push_slot(value)
@@ -796,7 +796,7 @@ impl Instruction for Dup {
 }
 
 impl Instruction for DupX1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let slot1 = stack.pop_slot();
         let slot2 = stack.pop_slot();
@@ -808,7 +808,7 @@ impl Instruction for DupX1 {
 }
 
 impl Instruction for DupX2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let slot1 = stack.pop_slot();
         let slot2 = stack.pop_slot();
@@ -822,7 +822,7 @@ impl Instruction for DupX2 {
 }
 
 impl Instruction for Dup2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let slot1 = stack.pop_slot();
         let slot2 = stack.pop_slot();
@@ -836,7 +836,7 @@ impl Instruction for Dup2 {
 }
 
 impl Instruction for Dup2X1 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let slot1 = stack.pop_slot();
         let slot2 = stack.pop_slot();
@@ -852,7 +852,7 @@ impl Instruction for Dup2X1 {
 }
 
 impl Instruction for Dup2X2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let slot1 = stack.pop_slot();
         let slot2 = stack.pop_slot();
@@ -870,20 +870,20 @@ impl Instruction for Dup2X2 {
 }
 
 impl Instruction for Pop {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.pop_slot();
     }
 }
 
 impl Instruction for Pop2 {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         frame.operand_stack.pop_slot();
         frame.operand_stack.pop_slot();
     }
 }
 
 impl Instruction for Swap {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let stack = frame.operand_stack.borrow_mut();
         let slot1 = stack.pop_slot();
         let slot2 = stack.pop_slot();
@@ -893,7 +893,7 @@ impl Instruction for Swap {
 }
 
 impl Instruction for DAdd {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         frame.operand_stack.push_double(slot1+slot2);
@@ -901,7 +901,7 @@ impl Instruction for DAdd {
 }
 
 impl Instruction for FAdd {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         frame.operand_stack.push_float(slot1+slot2);
@@ -909,7 +909,7 @@ impl Instruction for FAdd {
 }
 
 impl Instruction for IAdd {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot1+slot2);
@@ -917,7 +917,7 @@ impl Instruction for IAdd {
 }
 
 impl Instruction for LAdd {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot1+slot2);
@@ -925,7 +925,7 @@ impl Instruction for LAdd {
 }
 
 impl Instruction for DSub {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         frame.operand_stack.push_double(slot2-slot1);
@@ -933,7 +933,7 @@ impl Instruction for DSub {
 }
 
 impl Instruction for FSub {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         frame.operand_stack.push_float(slot2-slot1);
@@ -941,7 +941,7 @@ impl Instruction for FSub {
 }
 
 impl Instruction for ISub{
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot2-slot1);
@@ -949,7 +949,7 @@ impl Instruction for ISub{
 }
 
 impl Instruction for LSub {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot2-slot1);
@@ -957,7 +957,7 @@ impl Instruction for LSub {
 }
 
 impl Instruction for DDiv {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         frame.operand_stack.push_double(slot2/slot1);
@@ -965,7 +965,7 @@ impl Instruction for DDiv {
 }
 
 impl Instruction for FDiv{
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         frame.operand_stack.push_float(slot2/slot1);
@@ -973,7 +973,7 @@ impl Instruction for FDiv{
 }
 
 impl Instruction for IDiv {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot2/slot1);
@@ -981,7 +981,7 @@ impl Instruction for IDiv {
 }
 
 impl Instruction for LDiv {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot2/slot1);
@@ -989,7 +989,7 @@ impl Instruction for LDiv {
 }
 
 impl Instruction for DMul {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         frame.operand_stack.push_double(slot1*slot2);
@@ -997,7 +997,7 @@ impl Instruction for DMul {
 }
 
 impl Instruction for FMul {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         frame.operand_stack.push_float(slot1*slot2);
@@ -1005,7 +1005,7 @@ impl Instruction for FMul {
 }
 
 impl Instruction for IMul {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot1*slot2);
@@ -1013,7 +1013,7 @@ impl Instruction for IMul {
 }
 
 impl Instruction for LMul {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot1*slot2);
@@ -1021,7 +1021,7 @@ impl Instruction for LMul {
 }
 
 impl Instruction for IAnd {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot1 & slot2);
@@ -1029,7 +1029,7 @@ impl Instruction for IAnd {
 }
 
 impl Instruction for LAnd {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot1 & slot2);
@@ -1042,42 +1042,42 @@ impl Instruction for IINC {
         self.value = reader.read_u8().unwrap().into();
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.local_vars.get_int(self.index);
         frame.local_vars.set_int(self.index, slot1 + self.value);
     }
 }
 
 impl Instruction for DNeg {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         frame.operand_stack.push_double(-slot1);
     }
 }
 
 impl Instruction for FNeg {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         frame.operand_stack.push_float(-slot1);
     }
 }
 
 impl Instruction for INeg {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(-slot1);
     }
 }
 
 impl Instruction for LNeg {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(-slot1);
     }
 }
 
 impl Instruction for IOR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot1 | slot2);
@@ -1085,7 +1085,7 @@ impl Instruction for IOR {
 }
 
 impl Instruction for LOR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot1 | slot2);
@@ -1093,7 +1093,7 @@ impl Instruction for LOR {
 }
 
 impl Instruction for DRem {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         frame.operand_stack.push_double(slot2 % slot1);
@@ -1101,7 +1101,7 @@ impl Instruction for DRem {
 }
 
 impl Instruction for FRem {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         frame.operand_stack.push_float(slot2 % slot1);
@@ -1109,7 +1109,7 @@ impl Instruction for FRem {
 }
 
 impl Instruction for IRem {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot2 % slot1);
@@ -1117,7 +1117,7 @@ impl Instruction for IRem {
 }
 
 impl Instruction for LRem {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot2 % slot1);
@@ -1125,7 +1125,7 @@ impl Instruction for LRem {
 }
 
 impl Instruction for ISHL {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot2 << ((slot1 as u32) & 0x1f));
@@ -1133,7 +1133,7 @@ impl Instruction for ISHL {
 }
 
 impl Instruction for ISHR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot2 >> ((slot1 as u32) & 0x1f));
@@ -1141,7 +1141,7 @@ impl Instruction for ISHR {
 }
 
 impl Instruction for IUSHR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(((slot2 as u32) >> ((slot1 as u32) & 0x1f)) as i32);
@@ -1149,7 +1149,7 @@ impl Instruction for IUSHR {
 }
 
 impl Instruction for LSHL {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot2 << ((slot1 as u32) & 0x3f));
@@ -1157,7 +1157,7 @@ impl Instruction for LSHL {
 }
 
 impl Instruction for LSHR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(((slot2  as u64)>> ((slot1 as u32) & 0x3f)) as i64);
@@ -1165,7 +1165,7 @@ impl Instruction for LSHR {
 }
 
 impl Instruction for LUSHR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot2 >> ((slot1 as u32) & 0x3f));
@@ -1173,7 +1173,7 @@ impl Instruction for LUSHR {
 }
 
 impl Instruction for IXOR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         frame.operand_stack.push_int(slot1 ^ slot2);
@@ -1181,7 +1181,7 @@ impl Instruction for IXOR {
 }
 
 impl Instruction for LXOR {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         frame.operand_stack.push_long(slot1 ^ slot2);
@@ -1189,105 +1189,105 @@ impl Instruction for LXOR {
 }
 
 impl Instruction for D2F {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         frame.operand_stack.push_float(slot1 as f32);
     }
 }
 
 impl Instruction for D2I {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         frame.operand_stack.push_int(slot1 as i32);
     }
 }
 
 impl Instruction for D2L {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         frame.operand_stack.push_long(slot1 as i64);
     }
 }
 
 impl Instruction for F2D {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         frame.operand_stack.push_double(slot1 as f64);
     }
 }
 
 impl Instruction for F2I {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         frame.operand_stack.push_int(slot1 as i32);
     }
 }
 
 impl Instruction for F2L {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         frame.operand_stack.push_long(slot1 as i64);
     }
 }
 
 impl Instruction for I2D {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         frame.operand_stack.push_double(slot1 as f64);
     }
 }
 
 impl Instruction for I2B {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int() as i8;
         frame.operand_stack.push_int(slot1 as i32);
     }
 }
 
 impl Instruction for I2C {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int() as u16;
         frame.operand_stack.push_int(slot1 as i32);
     }
 }
 
 impl Instruction for I2S {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int() as i16;
         frame.operand_stack.push_int(slot1 as i32);
     }
 }
 
 impl Instruction for I2F {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         frame.operand_stack.push_float(slot1 as f32);
     }
 }
 
 impl Instruction for I2L {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         frame.operand_stack.push_long(slot1 as i64);
     }
 }
 
 impl Instruction for L2D {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         frame.operand_stack.push_double(slot1 as f64);
     }
 }
 
 impl Instruction for L2F {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         frame.operand_stack.push_float(slot1 as f32);
     }
 }
 
 impl Instruction for L2I {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         frame.operand_stack.push_int(slot1 as i32);
     }
@@ -1297,10 +1297,10 @@ impl Instruction for GOTO {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         // TODO 
         unsafe {
-            frame.next_pc = (*(frame.thread)).pc + self.offset;
+            frame.next_pc = thread.pc + self.offset;
         }
     }
 }
@@ -1313,18 +1313,18 @@ impl Instruction for LookUpSwitch {
         self.match_offsets = reader.read_i32s(self.n_pairs * 2).unwrap();
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let key = frame.operand_stack.pop_int();
         for i in (0..self.n_pairs * 2).step_by(2) {
             if self.match_offsets[i as usize] == key {
                 unsafe {
-                    frame.next_pc = ( *frame.thread ).pc + (self.match_offsets[(i+1) as usize]);
+                    frame.next_pc = thread.pc + (self.match_offsets[(i+1) as usize]);
                 }
                 return
             }
         }    
         unsafe {
-            frame.next_pc = ( *frame.thread ).pc + (self.default_offset);
+            frame.next_pc = (thread).pc + (self.default_offset);
         }
     }
 }
@@ -1338,20 +1338,20 @@ impl Instruction for TableSwitch {
         self.jump_offsets = reader.read_i32s(self.high - self.low +1).unwrap();
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let index = frame.operand_stack.pop_int();
         let mut offset = self.default_offset;
         if index >= self.low && index <= self.high {
             offset = self.jump_offsets[(index - self.low) as usize]
         }
         unsafe {
-            frame.next_pc = ( *frame.thread ).pc + (offset);
+            frame.next_pc = (thread).pc + (offset);
         }
     }
 }
 
 impl Instruction for DCMPG {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         if slot1.is_nan() || slot2.is_nan() {
@@ -1369,7 +1369,7 @@ impl Instruction for DCMPG {
 }
 
 impl Instruction for DCMPL {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_double();
         let slot2 = frame.operand_stack.pop_double();
         if slot1.is_nan() || slot2.is_nan() {
@@ -1387,7 +1387,7 @@ impl Instruction for DCMPL {
 }
 
 impl Instruction for FCMPG {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         if slot1.is_nan() || slot2.is_nan() {
@@ -1405,7 +1405,7 @@ impl Instruction for FCMPG {
 }
 
 impl Instruction for FCMPL {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_float();
         let slot2 = frame.operand_stack.pop_float();
         if slot1.is_nan() || slot2.is_nan() {
@@ -1423,7 +1423,7 @@ impl Instruction for FCMPL {
 }
 
 impl Instruction for LCMP {
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_long();
         let slot2 = frame.operand_stack.pop_long();
         if slot1 < slot2 {
@@ -1441,12 +1441,12 @@ impl Instruction for IFICMPEQ {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         if slot1 == slot2{
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1457,12 +1457,12 @@ impl Instruction for IFICMPNE {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         if slot1 != slot2{
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1473,12 +1473,12 @@ impl Instruction for IFICMPLT {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         if slot1 > slot2{
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1489,12 +1489,12 @@ impl Instruction for IFICMPLE {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         if slot1 >= slot2{
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1505,13 +1505,13 @@ impl Instruction for IFICMPGT {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         println!("IFICMPGT offset = {}", self.offset);
         if slot1 < slot2{
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1522,12 +1522,12 @@ impl Instruction for IFICMPGE {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         let slot2 = frame.operand_stack.pop_int();
         if slot1 <= slot2{
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1538,12 +1538,12 @@ impl Instruction for IFACMPEQ {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = &frame.operand_stack.pop_ref().unwrap();
         let slot2 = &frame.operand_stack.pop_ref().unwrap();
         if Rc::ptr_eq(slot1, slot2){
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1554,12 +1554,12 @@ impl Instruction for IFACMPNE {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = &frame.operand_stack.pop_ref().unwrap();
         let slot2 = &frame.operand_stack.pop_ref().unwrap();
         if Rc::ptr_eq(slot1, slot2){
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1569,11 +1569,11 @@ impl Instruction for IFEQ {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         if slot1 == 0 {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1583,11 +1583,11 @@ impl Instruction for IFNE {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         if slot1 != 0 {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1598,11 +1598,11 @@ impl Instruction for IFLT {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         if slot1 < 0 {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1613,11 +1613,11 @@ impl Instruction for IFLE {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         if slot1 <= 0 {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1628,11 +1628,11 @@ impl Instruction for IFGT {
         self.offset = reader.read_i16().unwrap() as i32;
     }
 
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         if slot1 > 0 {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1642,11 +1642,11 @@ impl Instruction for IFGE {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let slot1 = frame.operand_stack.pop_int();
         if slot1 >= 0 {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1656,9 +1656,9 @@ impl Instruction for GOTO_W {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i32().unwrap();
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         unsafe {
-            frame.next_pc = ( *frame.thread ).pc + (self.offset);
+            frame.next_pc = (thread).pc + (self.offset);
         }
     }
 }
@@ -1667,11 +1667,11 @@ impl Instruction for IFNULL {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let refernce = frame.operand_stack.pop_ref();
         if refernce.is_none() {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1681,11 +1681,11 @@ impl Instruction for IFNOTNULL {
     fn fetch_operands(&mut self, reader: &BytecodeReader) {
         self.offset = reader.read_i16().unwrap() as i32;
     }
-    fn execute(&self, frame: &mut Frame) {
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
         let refernce = frame.operand_stack.pop_ref();
         if refernce.is_some() {
             unsafe {
-                frame.next_pc = ( *frame.thread ).pc + (self.offset);
+                frame.next_pc = (thread).pc + (self.offset);
             }
         }
     }
@@ -1759,8 +1759,8 @@ impl Instruction for WIDE {
         }
     }
 
-    fn execute(&self, frame: &mut Frame) {
-        self.modified_inst.execute(frame);
+    fn execute(&self, frame: &mut Frame, thread: &mut Thread) {
+        self.modified_inst.execute(frame, thread);
     }
 
 }
