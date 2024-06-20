@@ -54,6 +54,7 @@ impl Reader {
 
         let constant_pool = parse_constant_pool(self, constant_pool_size)?;
         
+        println!("just a test {:?}", constant_pool);
         let access_flags = self.read_u16()?;
         let this_class = self.read_u16()?;
         let super_class = self.read_u16()?;
@@ -162,24 +163,18 @@ impl Reader {
     }
 }
 
-pub fn get_utf8(constant_pool: &HashMap<u16, ConstantInfo>, index: &u16) -> Option<String> {
-    if let ConstantUTF8 { value } = constant_pool.get(&index).unwrap() {
+pub fn get_utf8(constant_pool: &Vec<ConstantInfo>, index: &u16) -> Option<String> {
+    if let ConstantUTF8 { value } = &constant_pool[*index as usize] {
         println!("constant utf8 = {}", value);
         return Some(String::from(value));
     };
     return None;
 }
 
-pub fn get_class_name(constant_pool: &HashMap<u16, ConstantInfo>, this_class: &u16) -> Option<String> {
+pub fn get_class_name(constant_pool: &Vec<ConstantInfo>, this_class: &u16) -> Option<String> {
     println!("this_class {}", this_class);
-    if !constant_pool.contains_key(&this_class) {
-        return None;
-    }
-    if let ConstantClass { index } = constant_pool.get(&this_class).unwrap() {
-        if  !constant_pool.contains_key(&index){
-            return None;
-        }
-        if let ConstantUTF8 { value } = constant_pool.get(&index).unwrap() {
+    if let ConstantClass { index } = &constant_pool[*this_class as usize] {
+        if let ConstantUTF8 { value } = &constant_pool[*index as usize] {
             return Some(String::from(value));
         }
     }

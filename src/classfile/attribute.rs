@@ -95,7 +95,7 @@ pub enum AttributeInfo {
     SyntheticAttribute{}
 }
 
-pub fn parse_attributes(reader: &Reader, constant_pool: &HashMap<u16, ConstantInfo>) -> Result<Vec<AttributeInfo>, Error> {
+pub fn parse_attributes(reader: &Reader, constant_pool: &Vec<ConstantInfo>) -> Result<Vec<AttributeInfo>, Error> {
     let attributes_count = reader.read_u16()?;
     println!(" attributes count = {} ", attributes_count);
     let mut result = Vec::new();

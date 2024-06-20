@@ -55,6 +55,9 @@ pub enum ConstantInfo {
         bootstrap_method_attr_index: u16,
         name_and_type_index: u16,
     },
+    ConstantEmpty {
+       
+    },
 }
 
 const CONSTANT_CLASS: u8 = 7;
@@ -72,10 +75,11 @@ const CONSTANT_METHOD_HANDLE: u8 = 15;
 const CONSTANT_METHOD_TYPE: u8 = 16;
 const CONSTANT_INVOKE_DYN: u8 = 18;
 
-pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<HashMap<u16, ConstantInfo>, Error> {
-    let mut constant_pool = HashMap::<u16, ConstantInfo>::new();
+pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<Vec<ConstantInfo>, Error> {
+    let mut constant_pool =  Vec::new();
     // constant pool
     let mut index = 1;
+    constant_pool.push(ConstantEmpty{});
     while index < constant_pool_size {
         println!("loop index = {}", index);
         let tag = reader.read_u8()?;
@@ -84,26 +88,28 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
         match tag {
             CONSTANT_INTEGER => {
                 let v = reader.read_u32()?;
-                constant_pool.insert(index, ConstantInteger { value: v });
+                constant_pool.push( ConstantInteger { value: v });
                 println!("value = {}", v);
             }
             CONSTANT_FLOAT => {
                 let v = reader.read_u32()?;
-                constant_pool.insert(index, ConstantFloat { value: v });
+                constant_pool.push( ConstantFloat { value: v });
                 println!("value = {}", v);
             }
             CONSTANT_LONG => {
                 let v = reader.read_u64()?;
-                constant_pool.insert(index, ConstantLong { value: v });
+                constant_pool.push( ConstantLong { value: v });
                 println!("index before is {}", index);
                 index = index + 1;
+                constant_pool.push(ConstantEmpty{});
                 println!("index after is {}", index);
                 println!("value = {}", v);
             }
             CONSTANT_DOUBLE => {
                 let v = reader.read_u64()?;
-                constant_pool.insert(index, ConstantDouble { value: v });
+                constant_pool.push( ConstantDouble { value: v });
                 index = index + 1;
+                constant_pool.push(ConstantEmpty{});
                 println!("value = {}", v);
             }
             CONSTANT_UTF8 => {
@@ -116,25 +122,24 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
                     "CONSTANT_UTF8 utf8 length = {}, content = {}",
                     length, string
                 );
-                constant_pool.insert(index, ConstantUTF8 { value: string });
+                constant_pool.push( ConstantUTF8 { value: string });
             }
             CONSTANT_STRING => {
                 let str_index = reader.read_u16()?;
-                constant_pool.insert(index, ConstantString { index: str_index });
+                constant_pool.push( ConstantString { index: str_index });
                 println!("CONSTANT_STRING string index = {} ", str_index);
             }
 
             CONSTANT_CLASS => {
                 let class_index = reader.read_u16()?;
-                constant_pool.insert(index, ConstantClass { index: class_index });
+                constant_pool.push( ConstantClass { index: class_index });
                 println!("CONSTANT_CLASS class index = {} ", class_index);
             }
 
             CONSTANT_NAME_AND_TYPE => {
                 let name_index = reader.read_u16()?;
                 let descriptor_index = reader.read_u16()?;
-                constant_pool.insert(
-                    index,
+                constant_pool.push(
                     ConstantNameAndType {
                         name_index,
                         descriptor_index,
@@ -149,8 +154,7 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
             CONSTANT_FIELD_REF => {
                 let class_index = reader.read_u16()?;
                 let name_and_type_index = reader.read_u16()?;
-                constant_pool.insert(
-                    index,
+                constant_pool.push(
                     ConstantFieldReference {
                         class_index,
                         name_and_type_index,
@@ -169,8 +173,7 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
                     "CONSTANT_METHOD_REF class_index = {},  name_and_type_index= {}",
                     class_index, name_and_type_index
                 );
-                constant_pool.insert(
-                    index,
+                constant_pool.push(
                     ConstantMethodReference {
                         class_index,
                         name_and_type_index,
@@ -181,8 +184,7 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
             CONSTANT_INTERFACE_METHOD_REF => {
                 let class_index = reader.read_u16()?;
                 let name_and_type_index = reader.read_u16()?;
-                constant_pool.insert(
-                    index,
+                constant_pool.push(
                     ConstantInterfaceMethodReference {
                         class_index,
                         name_and_type_index,
@@ -196,7 +198,7 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
 
             CONSTANT_METHOD_TYPE => {
                 let descriptor_index = reader.read_u16()?;
-                constant_pool.insert(index, ConstantMethodType { descriptor_index });
+                constant_pool.push( ConstantMethodType { descriptor_index });
                 println!(
                     " CONSTANT_METHOD_TYPE  descriptor_index= {}",
                     descriptor_index
@@ -206,8 +208,7 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
             CONSTANT_METHOD_HANDLE => {
                 let ref_kind = reader.read_u8()?;
                 let ref_kind_index = reader.read_u16()?;
-                constant_pool.insert(
-                    index,
+                constant_pool.push(
                     ConstantMethodHandle {
                         ref_kind,
                         ref_kind_index,
@@ -221,8 +222,7 @@ pub fn parse_constant_pool(reader: &Reader, constant_pool_size: u16) -> Result<H
             CONSTANT_INVOKE_DYN => {
                 let bootstrap_method_attr_index = reader.read_u16()?;
                 let name_and_type_index = reader.read_u16()?;
-                constant_pool.insert(
-                    index,
+                constant_pool.push(
                     ConstantInvokeDynamic {
                         bootstrap_method_attr_index,
                         name_and_type_index,
